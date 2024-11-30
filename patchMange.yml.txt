@@ -1,0 +1,28 @@
+---
+- name: Linux Patch Management
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Update and upgrade packages (Ubuntu/Debian)
+      apt:
+        update_cache: yes
+        upgrade: dist
+      when: ansible_os_family == "Debian"
+
+    - name: Update and upgrade packages (CentOS/RHEL)
+      yum:
+        name: "*"
+        state: latest
+      when: ansible_os_family == "RedHat"
+
+    - name: Reboot the system if required
+      reboot:
+        msg: "Rebooting the system after patching"
+        reboot_timeout: 300
+      when: ansible_facts['os_family'] in ["RedHat", "Debian"]
+
+    - name: Log patching results
+      copy:
+        content: "Patching completed on {{ inventory_hostname }} at {{ ansible_date_time.date }} {{ ansible_date_time.time }}\n"
+        dest: /var/log/ansible_patch.log
